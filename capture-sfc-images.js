@@ -1,59 +1,59 @@
 // ==UserScript==
 // @name SFC Kapaisy Image URL Saver
-// @version 3.0
+// @version 3.1
 // @description Save image URLs from sfc.kapaisy.com for HarmonyOS
 // @author YourName
 // @target https://sfc.kapaisy.com/*
 // ==/UserScript==
 
-console.log("📱 鸿蒙系统SFC图片URL抓取脚本已加载");
+console.log("HarmonyOS SFC Image URL Capture Script Loaded");
 
-// 鸿蒙系统专用配置
+// HarmonyOS configuration
 const CONFIG = {
-  // 目标网站
+  // Target website
   TARGET_DOMAIN: "sfc.kapaisy.com",
   
-  // 鸿蒙系统推荐保存路径
+  // HarmonyOS save path
   SAVE_DIR: "/storage/emulated/0/Download/SFC_Images/",
   
-  // 日志文件
+  // Log file
   LOG_FILE: "capture_log.txt",
   
-  // URL列表文件
+  // URL list file
   URL_FILE: "image_urls.txt",
   
-  // JSON数据文件
+  // JSON data file
   JSON_FILE: "urls_data.json",
   
-  // 启用调试
+  // Enable debug
   DEBUG: true
 };
 
-// 调试日志
+// Debug log
 function debugLog(...args) {
   if (CONFIG.DEBUG) {
     console.log("[SFC]", ...args);
   }
 }
 
-// 初始化文件系统
+// Initialize file system
 async function initializeFileSystem() {
   try {
-    debugLog("初始化文件系统...");
+    debugLog("Initializing file system...");
     
-    // 创建主目录
+    // Create main directory
     const mainDir = File(CONFIG.SAVE_DIR);
     if (!(await mainDir.exists())) {
       await mainDir.create(true);
-      debugLog("✅ 创建目录:", CONFIG.SAVE_DIR);
+      debugLog("Created directory:", CONFIG.SAVE_DIR);
     }
     
-    // 测试文件写入
+    // Test file writing
     const testFile = File(CONFIG.SAVE_DIR + "test_write.log");
-    await testFile.writeAsString(`脚本启动时间: ${new Date().toISOString()}\n运行系统: HarmonyOS\n`, false);
-    debugLog("✅ 文件写入测试成功");
+    await testFile.writeAsString("Script start time: " + new Date().toISOString() + "\nOS: HarmonyOS\n", false);
+    debugLog("File write test successful");
     
-    // 创建必要的文件
+    // Create necessary files
     const files = [
       CONFIG.LOG_FILE,
       CONFIG.URL_FILE,
@@ -64,73 +64,73 @@ async function initializeFileSystem() {
       const file = File(CONFIG.SAVE_DIR + filename);
       if (!(await file.exists())) {
         await file.writeAsString("");
-        debugLog("📄 创建文件:", filename);
+        debugLog("Created file:", filename);
       }
     }
     
-    // 写入初始化日志
-    await writeToLog("脚本初始化完成");
-    await writeToLog(`保存目录: ${CONFIG.SAVE_DIR}`);
-    await writeToLog(`目标网站: ${CONFIG.TARGET_DOMAIN}`);
+    // Write initialization log
+    await writeToLog("Script initialization complete");
+    await writeToLog("Save directory: " + CONFIG.SAVE_DIR);
+    await writeToLog("Target website: " + CONFIG.TARGET_DOMAIN);
     
     return true;
     
   } catch (error) {
-    console.error("❌ 文件系统初始化失败:", error);
-    await writeToLog(`初始化失败: ${error.message}`);
+    console.error("File system initialization failed:", error);
+    await writeToLog("Initialization failed: " + error.message);
     return false;
   }
 }
 
-// 写入日志
+// Write to log
 async function writeToLog(message) {
   try {
     const logFile = File(CONFIG.SAVE_DIR + CONFIG.LOG_FILE);
     const timestamp = new Date().toLocaleString('zh-CN');
-    const logEntry = `[${timestamp}] ${message}\n`;
+    const logEntry = "[" + timestamp + "] " + message + "\n";
     
     await logFile.writeAsString(logEntry, true);
     return true;
   } catch (error) {
-    console.error("写入日志失败:", error);
+    console.error("Failed to write log:", error);
     return false;
   }
 }
 
-// 检查是否是目标网站的图片
+// Check if it's a target website image
 function isTargetImage(request, response) {
   try {
-    // 构建完整URL
-    const url = `https://${request.host}${request.path}`;
+    // Build full URL
+    const url = "https://" + request.host + request.path;
     
-    // 检查域名
+    // Check domain
     if (!request.host.includes(CONFIG.TARGET_DOMAIN)) {
       return false;
     }
     
-    debugLog("检查URL:", url);
+    debugLog("Checking URL:", url);
     
-    // 检查是否是图片 - 通过URL后缀
+    // Check if it's an image - by file extension
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
     for (const ext of imageExtensions) {
       if (request.path.toLowerCase().includes(ext)) {
-        debugLog("✅ 通过扩展名识别:", ext);
+        debugLog("Identified by extension:", ext);
         return true;
       }
     }
     
-    // 检查是否是图片 - 通过Content-Type
+    // Check if it's an image - by Content-Type
     const contentType = response.headers['content-type'] || response.headers['Content-Type'] || '';
     if (contentType.startsWith('image/')) {
-      debugLog("✅ 通过Content-Type识别:", contentType);
+      debugLog("Identified by Content-Type:", contentType);
       return true;
     }
     
-    // 检查是否是图片 - 通过路径关键词
+    // Check if it's an image - by path keywords
     const imagePaths = ['/images/', '/img/', '/upload/', '/media/', '/gallery/', '/photo/', '/picture/'];
     for (const path of imagePaths) {
       if (request.path.includes(path)) {
-        debugLog("✅ 通过路径识别:", path);
+        debugLog("Identified by path:", path);
         return true;
       }
     }
@@ -138,29 +138,29 @@ function isTargetImage(request, response) {
     return false;
     
   } catch (error) {
-    debugLog("检查图片时出错:", error);
+    debugLog("Error checking image:", error);
     return false;
   }
 }
 
-// 从路径提取文件名
+// Extract filename from path
 function extractFilename(path) {
   try {
-    // 获取路径的最后一部分
+    // Get the last part of the path
     const parts = path.split('/');
     let filename = parts[parts.length - 1];
     
     if (!filename) {
-      return `image_${Date.now()}.jpg`;
+      return "image_" + Date.now() + ".jpg";
     }
     
-    // 移除查询参数
+    // Remove query parameters
     filename = filename.split('?')[0];
     filename = filename.split('#')[0];
     
-    // 如果没有扩展名，添加一个
+    // If no extension, add one
     if (!filename.includes('.')) {
-      // 根据路径猜测扩展名
+      // Guess extension based on path
       if (path.includes('.jpg') || path.includes('.jpeg')) {
         filename += '.jpg';
       } else if (path.includes('.png')) {
@@ -170,36 +170,36 @@ function extractFilename(path) {
       } else if (path.includes('.webp')) {
         filename += '.webp';
       } else {
-        filename += '.jpg'; // 默认
+        filename += '.jpg'; // Default
       }
     }
     
     return filename;
   } catch (error) {
-    return `image_${Date.now()}.jpg`;
+    return "image_" + Date.now() + ".jpg";
   }
 }
 
-// 保存图片URL到文件
+// Save image URL to file
 async function saveImageUrl(request, response) {
   try {
-    const url = `https://${request.host}${request.path}`;
+    const url = "https://" + request.host + request.path;
     const filename = extractFilename(request.path);
     const contentType = response.headers['content-type'] || response.headers['Content-Type'] || 'unknown';
     const timestamp = new Date().toLocaleString('zh-CN');
     
-    debugLog("保存图片URL:", filename);
+    debugLog("Saving image URL:", filename);
     
-    // 1. 保存到文本文件（简单格式）
+    // 1. Save to text file (simple format)
     const urlFile = File(CONFIG.SAVE_DIR + CONFIG.URL_FILE);
-    const textEntry = `${timestamp} | ${url} | ${filename} | ${contentType} | ${response.statusCode}\n`;
+    const textEntry = timestamp + " | " + url + " | " + filename + " | " + contentType + " | " + response.statusCode + "\n";
     await urlFile.writeAsString(textEntry, true);
     
-    // 2. 保存到JSON文件（结构化数据）
+    // 2. Save to JSON file (structured data)
     const jsonFile = File(CONFIG.SAVE_DIR + CONFIG.JSON_FILE);
     let jsonData = [];
     
-    // 读取现有数据
+    // Read existing data
     if (await jsonFile.exists()) {
       try {
         const content = await jsonFile.readAsString();
@@ -209,9 +209,9 @@ async function saveImageUrl(request, response) {
       }
     }
     
-    // 添加新数据
+    // Add new data
     const imageInfo = {
-      id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: "img_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
       url: url,
       filename: filename,
       domain: request.host,
@@ -224,12 +224,12 @@ async function saveImageUrl(request, response) {
       downloaded: false
     };
     
-    // 去重
+    // Remove duplicates
     const exists = jsonData.some(item => item.url === url);
     if (!exists) {
       jsonData.push(imageInfo);
       
-      // 限制记录数量
+      // Limit number of records
       if (jsonData.length > 1000) {
         jsonData = jsonData.slice(-1000);
       }
@@ -237,60 +237,60 @@ async function saveImageUrl(request, response) {
       await jsonFile.writeAsString(JSON.stringify(jsonData, null, 2));
     }
     
-    // 3. 记录到日志
-    await writeToLog(`捕获图片: ${filename} (${contentType})`);
+    // 3. Log
+    await writeToLog("Captured image: " + filename + " (" + contentType + ")");
     
-    debugLog("✅ URL保存完成:", filename);
+    debugLog("URL saved:", filename);
     
     return true;
     
   } catch (error) {
-    console.error("保存URL失败:", error);
-    await writeToLog(`保存URL失败: ${error.message}`);
+    console.error("Failed to save URL:", error);
+    await writeToLog("Failed to save URL: " + error.message);
     return false;
   }
 }
 
-// 创建电脑端下载脚本
+// Create computer-side download scripts
 async function createDownloadScripts() {
   try {
-    // 创建批处理脚本
+    // Create batch script
     const batContent = `@echo off
 chcp 65001 >nul
 echo ========================================
-echo SFC图片批量下载工具（鸿蒙系统导出）
+echo SFC Image Batch Download Tool
 echo ========================================
 echo.
 
-REM 创建下载目录
+REM Create download directory
 if not exist "SFC_Images" mkdir "SFC_Images"
 
-echo 正在准备下载...
+echo Preparing download...
 
-REM 使用curl下载（如果可用）
+REM Use curl to download (if available)
 where curl >nul 2>nul
 if %errorlevel% equ 0 (
-    echo 使用curl下载...
+    echo Using curl...
     for /f "tokens=1,2,3 delims=|" %%a in ('type "image_urls.txt"') do (
-        echo 正在下载: %%c
+        echo Downloading: %%c
         curl -L -s -o "SFC_Images\\%%c" "%%b"
     )
     goto :success
 )
 
-REM 使用wget下载（如果可用）
+REM Use wget to download (if available)
 where wget >nul 2>nul
 if %errorlevel% equ 0 (
-    echo 使用wget下载...
+    echo Using wget...
     for /f "tokens=1,2,3 delims=|" %%a in ('type "image_urls.txt"') do (
-        echo 正在下载: %%c
+        echo Downloading: %%c
         wget -q -O "SFC_Images\\%%c" "%%b"
     )
     goto :success
 )
 
-echo 错误：请安装curl或wget
-echo 下载地址：
+echo Error: Please install curl or wget
+echo Download links:
 echo curl: https://curl.se/download.html
 echo wget: https://eternallybored.org/misc/wget/
 pause
@@ -299,36 +299,34 @@ exit /b 1
 :success
 echo.
 echo ========================================
-echo 下载完成！
-echo 图片保存在 SFC_Images 文件夹中
-echo 共下载文件，请查看文件夹确认
+echo Download complete!
+echo Images saved in SFC_Images folder
 echo ========================================
 pause`;
 
-    // 创建Python脚本
+    // Create Python script
     const pyContent = `#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-SFC图片批量下载脚本 - 鸿蒙系统专用
-使用方法: 
-1. 将手机中的 SFC_Images 文件夹复制到电脑
-2. 运行: python download_sfc.py
+SFC Image Batch Download Script
+Usage:
+1. Copy SFC_Images folder from phone to computer
+2. Run: python download_sfc.py
 """
 
 import os
 import json
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import time
 
 def read_urls_from_file(filename):
-    """从文件读取URL"""
+    """Read URLs from file"""
     urls = []
     with open(filename, 'r', encoding='utf-8') as f:
         for line in f:
             line = line.strip()
             if line and 'https://' in line:
-                # 解析格式: 时间 | URL | 文件名 | ...
+                # Parse format: time | URL | filename | ...
                 parts = line.split('|')
                 if len(parts) >= 3:
                     url = parts[1].strip()
@@ -337,15 +335,15 @@ def read_urls_from_file(filename):
     return urls
 
 def download_image(item, output_dir):
-    """下载单个图片"""
+    """Download single image"""
     try:
         url = item['url']
         filename = item['filename']
         save_path = os.path.join(output_dir, filename)
         
-        # 如果文件已存在，跳过
+        # Skip if file already exists
         if os.path.exists(save_path):
-            print(f"✓ 已存在: {filename}")
+            print(f"Already exists: {filename}")
             return True
         
         headers = {
@@ -361,48 +359,47 @@ def download_image(item, output_dir):
                     if chunk:
                         f.write(chunk)
             
-            print(f"✓ 下载成功: {filename}")
+            print(f"Downloaded: {filename}")
             return True
         else:
-            print(f"✗ 下载失败 [{response.status_code}]: {filename}")
+            print(f"Failed [{response.status_code}]: {filename}")
             return False
             
     except Exception as e:
-        print(f"✗ 下载出错: {item.get('filename', 'unknown')} - {str(e)}")
+        print(f"Error: {item.get('filename', 'unknown')} - {str(e)}")
         return False
 
 def main():
     print("=" * 60)
-    print("SFC Kapaisy 图片批量下载工具")
-    print("鸿蒙系统专用版本")
+    print("SFC Kapaisy Image Batch Download Tool")
     print("=" * 60)
     
-    # 检查文件
+    # Check files
     url_file = "image_urls.txt"
     json_file = "urls_data.json"
     
     if not os.path.exists(url_file):
-        print(f"错误: 找不到 {url_file}")
-        print("请确保将此脚本与手机导出的文件放在同一目录")
+        print(f"Error: Cannot find {url_file}")
+        print("Please place this script in the same directory as the exported files")
         return
     
-    # 创建下载目录
+    # Create download directory
     download_dir = "downloaded_images"
     if not os.path.exists(download_dir):
         os.makedirs(download_dir)
     
-    # 读取URL
-    print(f"\\n读取URL列表: {url_file}")
+    # Read URLs
+    print(f"\nReading URL list: {url_file}")
     urls = read_urls_from_file(url_file)
     
     if not urls:
-        print("未找到可下载的URL")
+        print("No URLs found for download")
         return
     
-    print(f"找到 {len(urls)} 个图片URL")
+    print(f"Found {len(urls)} image URLs")
     
-    # 批量下载（最多5个并发）
-    print("\\n开始批量下载...")
+    # Batch download (max 5 concurrent)
+    print("\nStarting batch download...")
     success_count = 0
     fail_count = 0
     
@@ -420,82 +417,82 @@ def main():
                 else:
                     fail_count += 1
             except Exception as e:
-                print(f"任务出错: {e}")
+                print(f"Task error: {e}")
                 fail_count += 1
     
-    # 显示结果
-    print("\\n" + "=" * 60)
-    print("下载完成!")
-    print(f"成功: {success_count}")
-    print(f"失败: {fail_count}")
-    print(f"总计: {len(urls)}")
-    print(f"\\n图片保存在: {download_dir}/")
+    # Show results
+    print("\n" + "=" * 60)
+    print("Download complete!")
+    print(f"Success: {success_count}")
+    print(f"Failed: {fail_count}")
+    print(f"Total: {len(urls)}")
+    print(f"\nImages saved in: {download_dir}/")
     print("=" * 60)
     
-    # 等待用户按键
-    input("按Enter键退出...")
+    # Wait for user input
+    input("Press Enter to exit...")
 
 if __name__ == "__main__":
     main()`;
 
-    // 保存脚本文件
+    // Save script files
     const batFile = File(CONFIG.SAVE_DIR + "download_images.bat");
     const pyFile = File(CONFIG.SAVE_DIR + "download_sfc.py");
     
     await batFile.writeAsString(batContent);
     await pyFile.writeAsString(pyContent);
     
-    await writeToLog("下载脚本已生成");
-    debugLog("📜 下载脚本创建完成");
+    await writeToLog("Download scripts generated");
+    debugLog("Download scripts created");
     
   } catch (error) {
-    debugLog("创建下载脚本失败:", error);
+    debugLog("Failed to create download scripts:", error);
   }
 }
 
-// ===== 主处理函数（必须符合Proxyin API规范）=====
+// ===== Main processing functions (must comply with Proxyin API) =====
 
-// 请求处理函数
+// Request processing function
 async function onRequest(context, request) {
   try {
-    // 使用context.session存储会话信息
+    // Use context.session to store session information
     context.session = context.session || {};
     
-    // 检查是否是目标网站
+    // Check if it's target website
     if (request.host && request.host.includes(CONFIG.TARGET_DOMAIN)) {
       context.session.sfcRequestTime = new Date().toISOString();
       
-      debugLog(`📤 请求: ${request.method} ${request.host}${request.path}`);
+      debugLog("Request: " + request.method + " " + request.host + request.path);
       
-      // 可以修改请求头（如果需要）
+      // Can modify request headers (if needed)
       // request.headers["User-Agent"] = "Mozilla/5.0 ...";
     }
     
   } catch (error) {
-    debugLog("onRequest错误:", error);
+    debugLog("onRequest error:", error);
   }
   
   return request;
 }
 
-// 响应处理函数
+// Response processing function
 async function onResponse(context, request, response) {
   try {
-    // 检查是否是目标网站的图片
+    // Check if it's a target website image
     if (isTargetImage(request, response)) {
-      const url = `https://${request.host}${request.path}`;
+      const url = "https://" + request.host + request.path;
       const filename = extractFilename(request.path);
       
-      debugLog("🎯 捕获到图片响应:");
-      debugLog("   网址:", url);
-      debugLog("   文件:", filename);
-      debugLog("   类型:", response.headers['content-type'] || 'unknown');
-      debugLog("   大小:", response.body ? response.body.length : 0, 'bytes');
+      debugLog("Captured image response:");
+      debugLog("  URL:", url);
+      debugLog("  File:", filename);
+      debugLog("  Type:", response.headers['content-type'] || 'unknown');
+      debugLog("  Size:", response.body ? response.body.length : 0, 'bytes');
       
-      // 保存URL到文件
+      // Save URL to file
       await saveImageUrl(request, response);
       
-      // 如果是第一次捕获，生成下载脚本
+      // If first capture, generate download scripts
       if (!context.session || !context.session.scriptGenerated) {
         await createDownloadScripts();
         context.session = context.session || {};
@@ -504,37 +501,37 @@ async function onResponse(context, request, response) {
     }
     
   } catch (error) {
-    console.error("onResponse错误:", error);
-    await writeToLog(`处理响应错误: ${error.message}`);
+    console.error("onResponse error:", error);
+    await writeToLog("Response processing error: " + error.message);
   }
   
   return response;
 }
 
-// ===== 脚本初始化 =====
+// ===== Script initialization =====
 (async function main() {
-  debugLog("🚀 脚本开始初始化...");
+  debugLog("Script initialization started...");
   
-  // 显示关键信息
+  // Display key information
   console.log("=".repeat(50));
-  console.log("SFC图片URL抓取脚本 - 鸿蒙系统专用");
+  console.log("SFC Image URL Capture Script - HarmonyOS Version");
   console.log("=".repeat(50));
-  console.log("目标网站: https://" + CONFIG.TARGET_DOMAIN);
-  console.log("保存目录: " + CONFIG.SAVE_DIR);
-  console.log("日志文件: " + CONFIG.LOG_FILE);
-  console.log("URL文件: " + CONFIG.URL_FILE);
+  console.log("Target website: https://" + CONFIG.TARGET_DOMAIN);
+  console.log("Save directory: " + CONFIG.SAVE_DIR);
+  console.log("Log file: " + CONFIG.LOG_FILE);
+  console.log("URL file: " + CONFIG.URL_FILE);
   console.log("=".repeat(50));
   
-  // 初始化文件系统
+  // Initialize file system
   const initSuccess = await initializeFileSystem();
   
   if (initSuccess) {
-    console.log("✅ 脚本初始化成功！");
-    console.log("💡 请访问 https://sfc.kapaisy.com 开始抓取");
-    console.log("💾 文件将保存在上述目录中");
+    console.log("Script initialization successful!");
+    console.log("Please visit https://sfc.kapaisy.com to start capturing");
+    console.log("Files will be saved in the above directory");
   } else {
-    console.log("⚠️  脚本初始化遇到问题，部分功能可能受限");
-    console.log("💡 请检查Proxyin的文件权限设置");
+    console.log("Script initialization encountered issues, some features may be limited");
+    console.log("Please check Proxyin's file permission settings");
   }
   
   console.log("=".repeat(50));
